@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lipsia S.A. — Optimización de producción con Programación Lineal en JS</title>
+<style>
+  :root{
+    --forest:#2F4B3C;
+    --forest-dark:#1C2E24;
+    --wood:#B9814F;
+    --wood-light:#E7D6BE;
+    --cream:#F6F2E9;
+    --ink:#22261F;
+    --line:#D8CDB8;
+    --ok:#3C6E47;
+    --bad:#A4463A;
+    font-size:16px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:Georgia,'Iowan Old Style','Palatino Linotype',serif;
+    line-height:1.5;
+  }
+  .sans{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+  header{
+    background:var(--forest);
+    color:var(--cream);
+    padding:2.4rem 1.5rem 2rem;
+  }
+  header .wrap{max-width:980px;margin:0 auto;}
+  header h1{
+    margin:0 0 .35rem;
+    font-size:1.8rem;
+    font-weight:600;
+    letter-spacing:.2px;
+  }
+  header p{
+    margin:0;
+    color:var(--wood-light);
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    font-size:.95rem;
+    max-width:640px;
+  }
+  main{max-width:980px;margin:0 auto;padding:2rem 1.5rem 3rem;}
+
+  section{margin-bottom:2.5rem;}
+  h2{
+    font-size:1.25rem;
+    margin:0 0 .9rem;
+    color:var(--forest-dark);
+    border-bottom:2px solid var(--wood);
+    padding-bottom:.4rem;
+  }
+  h3{font-size:1.02rem;margin:1.1rem 0 .5rem;color:var(--forest-dark);}
+
+  .grid{display:grid;grid-template-columns:1.1fr 1fr;gap:1.6rem;}
+  @media(max-width:760px){.grid{grid-template-columns:1fr;}}
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:1.2rem 1.3rem;
+  }
+
+  form .row{display:grid;grid-template-columns:1fr 90px;gap:.6rem;align-items:center;margin-bottom:.6rem;}
+  form label{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:.88rem;color:var(--forest-dark);}
+  form input{
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    padding:.35rem .5rem;
+    border:1px solid var(--line);
+    border-radius:4px;
+    font-size:.9rem;
+    width:100%;
+  }
+  fieldset{border:1px dashed var(--line);border-radius:6px;padding:.8rem 1rem 1rem;margin:0 0 1rem;}
+  legend{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:.82rem;padding:0 .4rem;color:var(--wood);font-weight:600;}
+
+  button{
+    background:var(--forest);
+    color:#fff;
+    border:none;
+    border-radius:5px;
+    padding:.65rem 1.1rem;
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    font-size:.92rem;
+    cursor:pointer;
+  }
+  button:hover{background:var(--forest-dark);}
+
+  #resultado{
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    min-height:180px;
+  }
+  .placeholder{color:#8a8577;font-size:.9rem;}
+  .kpi{
+    display:flex;justify-content:space-between;align-items:baseline;
+    padding:.55rem 0;border-bottom:1px solid var(--line);
+  }
+  .kpi:last-child{border-bottom:none;}
+  .kpi .val{font-size:1.15rem;font-weight:700;color:var(--forest-dark);}
+  .status{
+    display:inline-block;padding:.25rem .6rem;border-radius:4px;
+    font-size:.8rem;font-weight:600;margin-bottom:.8rem;
+  }
+  .status.ok{background:#E4EEE3;color:var(--ok);}
+  .status.bad{background:#F3E1DE;color:var(--bad);}
+
+  .steps{list-style:none;margin:0;padding:0;counter-reset:step;}
+  .steps li{
+    counter-increment:step;
+    position:relative;
+    padding:.5rem 0 .5rem 2.2rem;
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    font-size:.92rem;
+    border-left:2px solid var(--wood-light);
+    margin-left:.6rem;
+  }
+  .steps li::before{
+    content:counter(step);
+    position:absolute;left:-.75rem;top:.35rem;
+    width:1.4rem;height:1.4rem;border-radius:50%;
+    background:var(--wood);color:#fff;font-size:.75rem;
+    display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  .steps li:last-child{border-left-color:transparent;}
+
+  code{
+    background:var(--forest-dark);
+    color:#EFE6D6;
+    padding:.05rem .35rem;
+    border-radius:3px;
+    font-size:.85em;
+  }
+  pre{
+    background:var(--forest-dark);
+    color:#EFE6D6;
+    padding:1rem;
+    border-radius:6px;
+    overflow-x:auto;
+    font-size:.82rem;
+    line-height:1.5;
+  }
+
+  .opciones{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+  @media(max-width:760px){.opciones{grid-template-columns:1fr;}}
+  .opciones .card h3{margin-top:0;}
+  .tag{
+    display:inline-block;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    font-size:.72rem;font-weight:700;letter-spacing:.03em;
+    color:var(--wood);border:1px solid var(--wood);
+    border-radius:3px;padding:.1rem .4rem;margin-bottom:.5rem;
+  }
+
+  footer{
+    max-width:980px;margin:0 auto;padding:0 1.5rem 2.5rem;
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    font-size:.82rem;color:#5c584c;
+  }
+  footer ol{padding-left:1.2rem;}
+  footer a{color:var(--forest);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Lipsia S.A. — Mezcla óptima de producción</h1>
+    <p>Molduras de pino vs. pellets de biomasa, resuelto con Programación Lineal ejecutada en el navegador con JavaScript.</p>
+  </div>
+</header>
+
+<main>
+
+  <section>
+    <h2>1. El modelo</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>Variables y objetivo</h3>
+        <p class="sans" style="font-size:.92rem">
+          x₁ = m³/mes de molduras&nbsp;&nbsp;|&nbsp;&nbsp;x₂ = toneladas/mes de pellets<br>
+          Maximizar Z = m₁·x₁ + m₂·x₂ (margen neto por unidad)
+        </p>
+        <h3>Restricciones</h3>
+        <p class="sans" style="font-size:.92rem">
+          2x₁ + 1.5x₂ ≤ materia prima<br>
+          3x₁ + 4x₂ ≤ horas de secadero<br>
+          x₁ ≤ capacidad línea de molduras<br>
+          x₂ ≤ capacidad planta de pellets<br>
+          x₁, x₂ ≥ 0
+        </p>
+      </div>
+
+      <div class="card">
+        <form id="lpForm">
+          <fieldset>
+            <legend>Márgenes (Z)</legend>
+            <div class="row"><label>Margen m₁ (molduras, $/m³)</label><input type="number" id="m1" value="150" step="1"></div>
+            <div class="row"><label>Margen m₂ (pellets, $/ton)</label><input type="number" id="m2" value="90" step="1"></div>
+          </fieldset>
+          <fieldset>
+            <legend>Restricciones</legend>
+            <div class="row"><label>Materia prima disponible</label><input type="number" id="rhsMateria" value="360"></div>
+            <div class="row"><label>Horas de secadero</label><input type="number" id="rhsSecado" value="600"></div>
+            <div class="row"><label>Capacidad molduras (x₁ ≤)</label><input type="number" id="rhsMold" value="120"></div>
+            <div class="row"><label>Capacidad pellets (x₂ ≤)</label><input type="number" id="rhsPellet" value="150"></div>
+          </fieldset>
+          <button type="submit">Resolver</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Resultado</h2>
+    <div class="card">
+      <div id="resultado">
+        <p class="placeholder">Completá los datos y presioná "Resolver" para ver la solución óptima.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Cómo se resuelve esto en JS Vanilla</h2>
+    <p class="sans" style="font-size:.92rem">
+      El enunciado plantea dos caminos posibles. Esta página en realidad combina los dos, porque se complementan: la Opción B construye la interfaz que captura los datos, y la Opción A resuelve el modelo matemático detrás de escena.
+    </p>
+    <div class="opciones">
+      <div class="card">
+        <span class="tag">OPCIÓN A</span>
+        <h3>Librería / Solver JS</h3>
+        <p class="sans" style="font-size:.88rem">
+          Se usó <code>javascript-lp-solver</code>, cargada desde CDN, que implementa el método Simplex (con Big-M para restricciones ≤/≥ mixtas). Recibe el modelo como un objeto JSON y devuelve el punto óptimo sin necesidad de programar el algoritmo desde cero.
+        </p>
+      </div>
+      <div class="card">
+        <span class="tag">OPCIÓN B</span>
+        <h3>Interfaz / Widget interactivo</h3>
+        <p class="sans" style="font-size:.88rem">
+          El formulario de arriba usa <code>addEventListener('submit', ...)</code> para capturar los coeficientes que carga el usuario, arma el objeto del modelo y muta el DOM para mostrar el resultado, sin recargar la página.
+        </p>
+      </div>
+    </div>
+
+    <p class="sans" style="font-size:.92rem">
+      En resumen: el formulario captura los datos del usuario, arma con ellos un objeto que describe el modelo (objetivo, restricciones y variables) y se lo pasa al solver, que devuelve el punto óptimo para mostrarlo en pantalla.
+    </p>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/javascript-lp-solver@0.4.24/prod/solver.js"></script>
+<script>
+(function(){
+  var form = document.getElementById('lpForm');
+  var out = document.getElementById('resultado');
+
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+
+    var m1 = Number(document.getElementById('m1').value);
+    var m2 = Number(document.getElementById('m2').value);
+    var rMateria = Number(document.getElementById('rhsMateria').value);
+    var rSecado  = Number(document.getElementById('rhsSecado').value);
+    var rMold    = Number(document.getElementById('rhsMold').value);
+    var rPellet  = Number(document.getElementById('rhsPellet').value);
+
+    var modelo = {
+      optimize: "z",
+      opType: "max",
+      constraints: {
+        materiaPrima: { max: rMateria },
+        secado:       { max: rSecado },
+        capMolduras:  { max: rMold },
+        capPellets:   { max: rPellet }
+      },
+      variables: {
+        x1: { z: m1, materiaPrima: 2,   secado: 3, capMolduras: 1 },
+        x2: { z: m2, materiaPrima: 1.5, secado: 4, capPellets: 1 }
+      }
+    };
+
+    var res = solver.Solve(modelo);
+
+    if (!res.feasible) {
+      out.innerHTML = '<span class="status bad">Sin solución factible</span>' +
+        '<p class="sans" style="font-size:.9rem">Las restricciones cargadas no admiten ningún plan de producción. Revisá los valores.</p>';
+      return;
+    }
+
+    var x1 = res.x1 || 0;
+    var x2 = res.x2 || 0;
+
+    out.innerHTML =
+      '<span class="status ok">Solución óptima encontrada</span>' +
+      '<div class="kpi"><span>x₁ — Molduras (m³/mes)</span><span class="val">' + x1.toFixed(2) + '</span></div>' +
+      '<div class="kpi"><span>x₂ — Pellets (ton/mes)</span><span class="val">' + x2.toFixed(2) + '</span></div>' +
+      '<div class="kpi"><span>Z — Beneficio neto mensual</span><span class="val">$' + res.result.toFixed(2) + '</span></div>';
+  });
+
+  // Resolver una vez al cargar con los valores por defecto
+  form.dispatchEvent(new Event('submit'));
+})();
+</script>
+
+</body>
+</html>
